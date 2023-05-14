@@ -24,7 +24,7 @@ async def regular_isochrones(coordinates_list, travel_time):
     )
     return results
 
-def plot_isochrone(fig, result, coordinates_list, travel_time):
+def plot_isochrone(fig, result, coordinates_list, travel_time, label="Coordinate"):
     max_points = len(result.shapes)
 
     for idx, shape in enumerate(result.shapes):
@@ -37,9 +37,9 @@ def plot_isochrone(fig, result, coordinates_list, travel_time):
             mode='lines',
             line=dict(width=4),
             fill='toself',
-            text=f"Isochrone {idx+1}, {travel_time} minutes",
+            text=f"Isochrone {idx+1} For {label}, {travel_time} minutes",
             hoverinfo='text',
-            name=f"Isochrone {idx+1}, {travel_time} minutes",
+            name=f"Isochrone {idx+1} For {label}, {travel_time} minutes",
             showlegend=True
         ))
 
@@ -49,9 +49,9 @@ def plot_isochrone(fig, result, coordinates_list, travel_time):
             lon=[coord.lng],
             mode='markers',
             marker=dict(size=8),
-            text="Coordinate",
+            text=label,
             hoverinfo='text',
-            name="Coordinate",
+            name=label,
             showlegend=True
         ))
 
@@ -72,8 +72,13 @@ def get_coords_from_csv(filename):
     with open(filename, 'r') as file:
         reader = csv.reader(file)
         for row in reader:
-            lat, lng, range_ = map(float, row)
-            coordinates.append((Coordinates(lat=lat, lng=lng), range_))
+            try:
+                lat, lng, range_ = map(float, row)
+                label = None
+            except ValueError: # maybe the row contains a label at the end that isn't a float
+                lat, lng, range_ = map(float, row[:-1])
+                label = row[-1]
+            coordinates.append((Coordinates(lat=lat, lng=lng), range_, label))
     return coordinates
 
 
@@ -83,16 +88,16 @@ if __name__ == '__main__':
     fig = go.Figure()
 
     individual_results = []
-    intersection_coords = [coords for coords, _ in coords_ranges]
+    intersection_coords = [coords for coords, _, _ in coords_ranges]
 
-    for coords, travel_time in coords_ranges:
+    for coords, travel_time, label in coords_ranges:
         single_result = asyncio.run(regular_isochrones([coords], travel_time))[0]
         if len(single_result.shapes) > 1:
             # Only keep the shape with the most points
             print(f"Found {len(single_result.shapes)} shapes for {coords.lat}, {coords.lng}. Keeping the one with the most points.")
             single_result.shapes = [max(single_result.shapes, key=lambda shape: len(shape.shell))]
         individual_results.append(single_result)
-        plot_isochrone(fig, single_result, [coords], travel_time)
+        plot_isochrone(fig, single_result, [coords], travel_time, label=label)
 
     fig.show()
 
