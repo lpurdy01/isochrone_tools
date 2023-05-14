@@ -50,6 +50,8 @@ python isochrone_map_plotter.py
 
 The script will read the input CSV file, fetch the isochrone data from the TravelTime API, and plot the isochrone map in your browser using Plotly. You can interact with the map, zooming and panning to explore the isochrones.
 
+![Sample isochrone map](sample_plot_isochrones.png)
+
 ## Output
 
 The generated isochrone map will be displayed in your browser, where you can interact with it. Each isochrone polygon will be labeled according to its corresponding coordinate and travel time. The points from the input CSV file are also plotted and labeled as "Coordinate".
